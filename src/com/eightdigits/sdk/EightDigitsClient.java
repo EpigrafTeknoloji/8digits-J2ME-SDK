@@ -1,5 +1,6 @@
 package com.eightdigits.sdk;
 
+import com.eightdigits.sdk.exceptions.EightDigitsApiException;
 import com.eightdigits.sdk.util.UniqIdentifier;
 import com.eightdigits.sdk.util.UrlEncoder;
 import com.eightdigits.sdk.util.Utils;
@@ -29,6 +30,9 @@ import org.json.me.JSONObject;
 public class EightDigitsClient {
 
     private static EightDigitsClient instance;
+    private static int API_TRY_LIMIT = 5;
+    private static int tryCount = 0;
+    
     private String urlPrefix;
     private String trackingCode;
     private String visitorCode;
@@ -40,6 +44,7 @@ public class EightDigitsClient {
     private MIDlet middlet;
     private Logger logger;
     private Appender logAppender;
+    
 
     /**
      * Constructor
@@ -119,7 +124,7 @@ public class EightDigitsClient {
         userAgent += " like Mac OS X; en-us) AppleWebKit (KHTML, like Gecko) Mobile/8A293 Safari";
         Display display = Display.getDisplay(this.middlet);
         Displayable displayable = display.getCurrent();
-        
+
         int width = displayable.getWidth();
         int height = displayable.getHeight();
         String locale = System.getProperty("microedition.locale");
@@ -143,15 +148,15 @@ public class EightDigitsClient {
 
         JSONObject response = this.apiRequest("/api/visit/create", params);
 
-        if(response != null) {
+        if (response != null) {
             String _hitCode = Utils.getStringFromJsonObject(response, Constants.HIT_CODE);
             String _sessionCode = Utils.getStringFromJsonObject(response, Constants.SESSION_CODE);
-            
+
             this.setHitCode(_hitCode);
             this.setSessionCode(_sessionCode);
             return true;
         }
-        
+
         return false;
     }
 
@@ -282,6 +287,8 @@ public class EightDigitsClient {
         byte[] data = null;
         InputStream httpInputStream = null;
         String apiResponse = null;
+        JSONObject response = null;
+
         try {
             this.logger.debug("Setting http connection");
             HttpConnection http = (HttpConnection) Connector.open(url);
@@ -297,7 +304,6 @@ public class EightDigitsClient {
             this.logger.debug("Http response code = " + http.getResponseCode());
 
             if (http.getResponseCode() == HttpConnection.HTTP_OK) {
-                int len = (int) http.getLength();
                 httpInputStream = http.openInputStream();
 
                 if (httpInputStream == null) {
@@ -311,7 +317,24 @@ public class EightDigitsClient {
             this.logger.error(e);
         }
 
-        JSONObject response = this.parseResult(apiResponse);
+        try {
+            response = this.parseResult(apiResponse);
+        } catch (EightDigitsApiException e) {
+            EightDigitsClient.tryCount++;
+
+            if (EightDigitsClient.tryCount < EightDigitsClient.API_TRY_LIMIT) {
+                // Auth token expired, get new one!
+                boolean auth = this.authWithUsername(this.getUsername(), this.getPassword());
+
+                if (auth) {
+                    response = this.apiRequest(path, params);
+                }
+            }
+
+
+
+        }
+
         return response;
     }
 
@@ -342,7 +365,7 @@ public class EightDigitsClient {
     /**
      * Parses JSON response and returns value of data key as JSONObject
      */
-    private JSONObject parseResult(String apiResponse) {
+    private JSONObject parseResult(String apiResponse) throws EightDigitsApiException {
         JSONObject response = null;
 
         if (apiResponse != null) {
@@ -351,8 +374,10 @@ public class EightDigitsClient {
                 String responseCode = ((JSONObject) apiResponseAsJson.get(Constants.RESULT)).getString(Constants.CODE);
 
                 // Successful request
-                if (responseCode.equals("0") && apiResponseAsJson.has(Constants.DATA) ) {
+                if (responseCode.equals("0") && apiResponseAsJson.has(Constants.DATA)) {
                     response = (JSONObject) apiResponseAsJson.get(Constants.DATA);
+                } else if (responseCode.equals(Constants.AUTH_TOKEN_EXPIRED_CODE)) {
+                    throw new EightDigitsApiException(-1, "Auth token expired");
                 }
             } catch (JSONException e) {
                 this.logger.error(e);

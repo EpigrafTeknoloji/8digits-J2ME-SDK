@@ -41,4 +41,6 @@ public class Constants {
     public static final String BADGES = "badges";
     public static final String EIGHT_DIGITS = "8digits";
     public static final String UNIQ_ID = "uniqId";
+    public static final String AUTH_TOKEN_EXPIRED_CODE = "-1";
+
 }
