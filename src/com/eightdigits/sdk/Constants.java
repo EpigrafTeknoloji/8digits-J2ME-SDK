@@ -39,4 +39,6 @@ public class Constants {
     public static final String CODE = "code";
     public static final String SCORE = "score";
     public static final String BADGES = "badges";
+    public static final String EIGHT_DIGITS = "8digits";
+    public static final String UNIQ_ID = "uniqId";
 }

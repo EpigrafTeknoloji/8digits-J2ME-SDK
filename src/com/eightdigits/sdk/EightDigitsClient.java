@@ -1,5 +1,6 @@
 package com.eightdigits.sdk;
 
+import com.eightdigits.sdk.util.UniqIdentifier;
 import com.eightdigits.sdk.util.UrlEncoder;
 import com.eightdigits.sdk.util.Utils;
 import java.io.ByteArrayOutputStream;
@@ -49,6 +50,8 @@ public class EightDigitsClient {
         this.setTrackingCode(trackingCode);
         this.setVisitorCode(Utils.generateUniqId());
         this.middlet = middlet;
+        String id = UniqIdentifier.id(this.logger, trackingCode);
+        this.logger.debug("id = " + id);
     }
 
     public static EightDigitsClient getInstance() {
@@ -112,10 +115,6 @@ public class EightDigitsClient {
     public boolean newVisit(String title, String path) {
         String model = "Linux";
         String userAgent = "Mozilla/5.0 (" + model + "; U; " + "J2ME ;" + System.getProperty("microedition.platform");
-
-        /*
-         * if (systemVersion >= 10) { userAgent += " " + android.os.Build.SERIAL; }
-         */
 
         userAgent += " like Mac OS X; en-us) AppleWebKit (KHTML, like Gecko) Mobile/8A293 Safari";
         Display display = Display.getDisplay(this.middlet);
