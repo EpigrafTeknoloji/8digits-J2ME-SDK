@@ -397,7 +397,7 @@ public class EightDigitsClient {
         try {
             Hashtable vendors  = new Hashtable();
             vendors.put("com.nokia.mid.cellid", "Nokia");
-            vendors.put("com.sonyericsson.net.cellid", "Sony Ericcson");
+            vendors.put("com.sonyericsson.net.cellid", "Sony Ericsson");
             vendors.put("com.samsung.cellid", "Samsung");
             vendors.put("com.siemens.cellid", "Siemens");
             vendors.put("cid", "J2ME");
