@@ -32,7 +32,6 @@ public class EightDigitsClient {
     private static EightDigitsClient instance;
     private static int API_TRY_LIMIT = 5;
     private static int tryCount = 0;
-    
     private String urlPrefix;
     private String trackingCode;
     private String visitorCode;
@@ -44,7 +43,6 @@ public class EightDigitsClient {
     private MIDlet middlet;
     private Logger logger;
     private Appender logAppender;
-    
 
     /**
      * Constructor
@@ -140,10 +138,10 @@ public class EightDigitsClient {
         params.put(Constants.COLOR, "24");
         params.put(Constants.ACCEPT_LANG, locale);
         params.put(Constants.FLASH_VERSION, "0.0.0");
-        params.put(Constants.JAVA_ENABLED, "false");
+        params.put(Constants.JAVA_ENABLED, "true");
         params.put(Constants.USER_AGENT, userAgent);
         params.put(Constants.DEVICE, "J2ME");
-        params.put(Constants.VENDOR, "J2ME");
+        params.put(Constants.VENDOR, this.findVendor());
         params.put(Constants.MODEL, System.getProperty("microedition.platform"));
 
         JSONObject response = this.apiRequest("/api/visit/create", params);
@@ -392,6 +390,38 @@ public class EightDigitsClient {
         this.logger = LoggerFactory.getLogger(EightDigitsClient.class);
         this.logAppender = new ConsoleAppender(System.out);
         this.logger.addAppender(this.logAppender);
+    }
+
+    private String findVendor() {
+        String vendor = "J2ME";
+        try {
+            Hashtable vendors  = new Hashtable();
+            vendors.put("com.nokia.mid.cellid", "Nokia");
+            vendors.put("com.sonyericsson.net.cellid", "Sony Ericcson");
+            vendors.put("com.samsung.cellid", "Samsung");
+            vendors.put("com.siemens.cellid", "Siemens");
+            vendors.put("cid", "J2ME");
+            vendors.put("Cell-ID", "J2ME");
+            vendors.put("phone.cid", "J2ME");
+
+            Enumeration e = vendors.keys();
+            String _vendor = "";
+
+            while(e.hasMoreElements()) {
+                String key = (String) e.nextElement();
+                String value = (String) vendors.get(key);
+
+                _vendor = System.getProperty(key);
+
+                if(_vendor != null && !_vendor.equals("") && !_vendor.equals("null")) {
+                    vendor = _vendor;
+                    break;
+                }
+
+            }
+        } catch (Exception e) {
+        }
+        return vendor;
     }
 
     public String getUsername() {
